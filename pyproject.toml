@@ -1,0 +1,7 @@
+[project]
+name = "sudoku"
+version = "0.1.0"
+description = "A simple sudoku generator"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
