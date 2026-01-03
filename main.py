@@ -1,21 +1,19 @@
 import random
+import copy
+
+from fastapi import FastAPI
+
+app = FastAPI()
+
 
 SIZE = 9
-MIN_CLUES = 2 # Minimum of clues per box (To make it unique must have 17+ clues)
-MAX_CLUES = 4 # Max clues per box
+CELLS_AMOUNT = SIZE * SIZE
+MIN_CLUES = 17
+MAX_CLUES = 30
 VALID_BOX_RANGE = range(3)
 
-def get_random(min_num, max_num):
-    return random.randint(min_num, max_num)
-
-def generate_grid():
-    grid = []
-    for _ in range(SIZE):
-        box = []
-        for _ in range(SIZE):
-            box.append(0)
-        grid.append(box)
-    return grid
+def generate():
+    return [[0] * SIZE for _ in range(SIZE)]
 
 def print_grid(grid):
     for i in range(SIZE):
@@ -39,20 +37,6 @@ def get_box_cells(box_row, box_col):
         for j in range (col_start, col_start  + 3):
             box_cells.append((i,j))
     return box_cells
-
-def place_box_clues(grid, box_cells):
-    clues_amount = random.randint(MIN_CLUES, MAX_CLUES)
-
-    random.shuffle(box_cells)
-    numbers = list(range(1, 10))
-    random.shuffle(numbers)
-
-    for row, col in box_cells[:clues_amount]:
-        for clue in numbers:
-            if can_place_clue(grid, row, col, clue):
-                grid[row][col] = clue
-                break
-    return grid
 
 def validate_row(grid, row, val):
     for j in range(SIZE):
@@ -80,18 +64,105 @@ def can_place_clue(grid, row, col, val):
         and validate_box(grid, row, col, val)
     )
 
-def fill_grid(grid):
-    for i in range(3):
-        for j in range(3):
-            box = get_box_cells(i,j)
-            place_box_clues(grid, box)
-    return grid
+def find_empty_cell(grid):
+    for i in range(SIZE):
+        for j in range(SIZE):
+            if grid[i][j] == 0:
+                return (i,j)
+    return None
 
+def fill(grid):
+    empty = find_empty_cell(grid)
+    if empty is None:
+        return True # Sudoku is solved
+
+    row, col = empty
+    nums = list(range(1, 10))
+    random.shuffle(nums)
+
+    for num in nums:
+        if can_place_clue(grid, row, col, num):
+            grid[row][col] = num
+
+            if fill(grid):
+                return True
+
+            grid[row][col] = 0  # backtrack
+    return False  
+
+def count_solutions(grid, limit=2):
+    empty = find_empty_cell(grid)
+    if empty is None:
+        return 1
+
+    row, col = empty
+    count = 0
+    nums = list(range(1, 10))
+    random.shuffle(nums)
+
+    for num in nums:
+        if can_place_clue(grid, row, col, num):
+            grid[row][col] = num
+            count += count_solutions(grid, limit)
+            grid[row][col] = 0  # backtrack
+
+            if count >= limit:
+                return count
+    return count  
+
+def remove_clues(grid):
+    clues_amount = random.randint(MIN_CLUES, MAX_CLUES)
+    removed = 0
+
+    cells = get_cells()
+    random.shuffle(cells)
+
+    for row, col in cells:
+        if grid[row][col] == 0:
+            continue
+
+        if CELLS_AMOUNT - removed <= clues_amount:
+            break
+
+        backup = grid[row][col]
+        grid[row][col] = 0
+
+        grid_copy = copy.deepcopy(grid)
+        if count_solutions(grid_copy) != 1:
+            grid[row][col] = backup
+        else:
+            removed += 1
+
+def get_cells():
+    cells = []
+    for i in range(SIZE):
+        for j in range(SIZE):
+            cells.append((i,j))
+    return cells
 
 def main():
-    grid = generate_grid()
-    print_grid(fill_grid(grid))   
+    # empty grid
+    grid = generate()
+    # fill grid
+    fill(grid)
+    # save solution
+    solution = copy.deepcopy(grid)
+    # get puzzle
+    remove_clues(grid)
+    puzzle = grid
 
+@app.get("/sudoku")
+def generate_sudoku():
+    grid = generate()
+    fill(grid)
 
-if __name__ == "__main__":
-    main()
+    solution = copy.deepcopy(grid)
+
+    remove_clues(grid)
+    puzzle = grid
+
+    return {
+        "puzzle": puzzle,
+        "solution": solution
+    }
+
