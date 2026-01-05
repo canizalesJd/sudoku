@@ -11,4 +11,4 @@ jobs:
     steps:
       - name: Call API
         run: |
-          curl https://sudoku-5smc.onrender.com/sudoku
+          curl https://sudoku-5smc.onrender.com/heatlh
