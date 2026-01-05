@@ -1,20 +1,28 @@
 import random
 import copy
+import time
 
 from fastapi import FastAPI
 
 app = FastAPI()
-
 
 SIZE = 9
 CELLS_AMOUNT = SIZE * SIZE
 MIN_CLUES = 17
 MAX_CLUES = 30
 VALID_BOX_RANGE = range(3)
+CACHE_TTL = 600  # 10 minutes
+
+sudoku_cache = {
+    "puzzle": None,
+    "solution": None,
+    "timestamp": 0
+}
 
 def generate():
     return [[0] * SIZE for _ in range(SIZE)]
 
+# print method for local testing
 def print_grid(grid):
     for i in range(SIZE):
         if i != 0 and i % 3 == 0:
@@ -140,30 +148,30 @@ def get_cells():
             cells.append((i,j))
     return cells
 
-def main():
-    # empty grid
-    grid = generate()
-    # fill grid
-    fill(grid)
-    # save solution
-    solution = copy.deepcopy(grid)
-    # get puzzle
-    remove_clues(grid)
-    puzzle = grid
-
 @app.get("/sudoku")
 def generate_sudoku():
+    now = time.time()
+
+    if (
+        sudoku_cache["puzzle"] is not None
+        and now - sudoku_cache["timestamp"] < CACHE_TTL
+    ):
+        return {
+            "puzzle": sudoku_cache["puzzle"]
+        }
+
+    # generate new sudoku
     grid = generate()
     fill(grid)
-
     solution = copy.deepcopy(grid)
-
     remove_clues(grid)
-    puzzle = grid
+
+    sudoku_cache["puzzle"] = grid
+    sudoku_cache["solution"] = solution
+    sudoku_cache["timestamp"] = now
 
     return {
-        "puzzle": puzzle,
-        "solution": solution
+        "puzzle": grid
     }
 
 @app.get("/health")
@@ -173,4 +181,19 @@ def health():
         "service": "sudoku-api"
     }
 
+@app.get("/")
+def root():
+    return {
+        "name": "Sudoku API",
+        "status": "running"
+    }
+
+@app.post("/sudoku/check")
+def check_solution(user_grid: list[list[int]]):
+    if sudoku_cache["solution"] is None:
+        return {"error": "No active puzzle"}
+
+    return {
+        "correct": user_grid == sudoku_cache["solution"]
+    }
 

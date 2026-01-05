@@ -91,13 +91,32 @@ GET /sudoku
   "puzzle": [
     [0, 3, 0, 0, 7, 0, 0, 0, 0],
     ...
-  ],
-  "solution": [
-    [5, 3, 4, 6, 7, 8, 9, 1, 2],
-    ...
   ]
 }
+
 ```
+
+### Check a Sudoku solution
+
+```
+POST /sudoku/check
+```
+
+** Request Body **
+```json
+[
+  [5, 3, 4, 6, 7, 8, 9, 1, 2],
+  ...
+]
+```
+
+** Example response **
+```json
+{
+  "correct": true
+}
+```
+
 
 ### Get service status
 
