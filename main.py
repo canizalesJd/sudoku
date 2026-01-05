@@ -166,3 +166,11 @@ def generate_sudoku():
         "solution": solution
     }
 
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "service": "sudoku-api"
+    }
+
+

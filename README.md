@@ -99,6 +99,21 @@ GET /sudoku
 }
 ```
 
+### Get service status
+
+```
+GET /health
+```
+
+**Example Response:**
+
+```json
+{
+  "status": "ok",
+  "service": "sudoku-api"
+}
+```
+
 ## 🧠 Design Notes
 
 - Backtracking-based grid generation
