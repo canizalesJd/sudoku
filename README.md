@@ -102,7 +102,7 @@ GET /sudoku
 POST /sudoku/check
 ```
 
-** Request Body **
+**Request Body:**
 ```json
 [
   [5, 3, 4, 6, 7, 8, 9, 1, 2],
@@ -110,7 +110,7 @@ POST /sudoku/check
 ]
 ```
 
-** Example response **
+**Example response:**
 ```json
 {
   "correct": true
@@ -133,6 +133,40 @@ GET /health
 }
 ```
 
+### Solve a Sudoku puzzle
+
+
+**Request Body:**
+
+```json
+[
+  [5, 3, 0, 0, 7, 0, 0, 0, 0],
+  ...
+]
+```
+
+**Example response:**
+
+```json
+{
+  "solvable": true,
+  "solution": [
+    [5, 3, 4, 6, 7, 8, 9, 1, 2],
+    ...
+  ]
+}
+```
+
+*If the puzzle is invalid or unsolvable:*
+
+```json
+{
+  "solvable": false,
+  "solution": null
+}
+```
+
+
 ## 🧠 Design Notes
 
 - Backtracking-based grid generation
@@ -143,11 +177,9 @@ GET /health
 
 ## 🚀 Future Improvements
 
-- Difficulty levels (easy / medium / hard)
-- Sudoku solver endpoint
-- Puzzle validation endpoint
+- Unit tests for generator and solver
+- Pydantic models for request/response validation
 - Frontend integration (React / Next.js)
-- Puzzle persistence
 
 ## 👤 Credits
 

@@ -148,6 +148,36 @@ def get_cells():
             cells.append((i,j))
     return cells
 
+def solve(grid: list[list[int]]):
+    empty = find_empty_cell(grid)
+    if empty is None:
+        return True # solved
+    
+    row, col = empty
+
+    for num in range(1, 10):
+        if can_place_clue(grid, row, col, num):
+            grid[row][col] = num
+
+            if solve(grid):
+                return True
+            
+            grid[row][col] = 0 # backtrack
+    return False
+
+def is_valid_grid(grid):
+    if len(grid) != SIZE:
+        return False
+
+    for row in grid:
+        if len(row) != SIZE:
+            return False
+        for val in row:
+            if not (0 <= val <= SIZE):
+                return False
+    return True
+
+
 @app.get("/sudoku")
 def generate_sudoku():
     now = time.time()
@@ -197,3 +227,21 @@ def check_solution(user_grid: list[list[int]]):
         "correct": user_grid == sudoku_cache["solution"]
     }
 
+@app.post("/sudoku/solve")
+def solve_sudoku(user_grid: list[list[int]]):
+    grid = copy.deepcopy(user_grid)
+    valid = is_valid_grid(grid)
+
+    if not valid:
+        return {"error": "Invalid grid"}
+
+    if not solve(grid):
+        return {
+            "solvable": False,
+            "solution": None
+        }
+
+    return {
+        "solvable": True,
+        "solution": grid
+    }
